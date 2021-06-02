@@ -1,0 +1,616 @@
+"use strict"
+var activeVotedUserListDiv;
+
+String.prototype.distance = function(char) {
+  var index = this.indexOf(char);
+
+  if (index === -1) {
+    alert(char + " does not appear in " + this);
+  } else {
+    alert(char + " is " + (this.length - index) + " characters from the end of the string!");
+  }
+};
+$("#thisWeekListShowMore").click(function() {
+  $("#thisWeekListShowMore").toggle();
+  $("div[id^=thisWeekShowMore_]").toggle();
+});
+$("#lastWeekListShowMore").click(function() {
+  $("#lastWeekListShowMore").toggle();
+  $("div[id^=lastWeekShowMore_]").toggle();
+});
+$("#previousWeekListShowMore").click(function() {
+  $("#previousWeekListShowMore").toggle();
+  $("div[id^=previousWeekShowMore_]").toggle();
+});
+$(document).ready(function() {
+
+  $(".listVoting").on('click', (event) => {
+    let currentElem = $(event.currentTarget);
+
+     votingList({
+      movieId: currentElem[0].id,
+      voting: currentElem.hasClass('upvote') ? 'upVoted' : 'downVoted',
+      genre: ""
+    });
+  });
+
+  $('.form-check-input-styled').uniform();
+  $('.form-check-input-styled-primary').uniform({
+    wrapperClass: 'border-primary-600 text-primary-800'
+  });
+  var selectedLanguage = "";
+  if (window.location.search.length > 0) {
+    selectedLanguage = window.location.search.split("?language=")[1].split(/[!@#$%^&*(),.?":{}|<>]/g)[0];
+  }
+  var selected = false;
+  var options = document.getElementById("language_qr");
+  if (!user.status) {
+    for (var i = 0; i < preferedLanuage.length; i++) {
+      if (selectedLanguage !== "" && preferedLanuage[i] === selectedLanguage) {
+        selected = true;
+        options.innerHTML += '<option value=' + preferedLanuage[i] + ' selected>' + preferedLanuage[i] + '</option>';
+      } else {
+        options.innerHTML += '<option value=' + preferedLanuage[i] + '>' + preferedLanuage[i] + '</option>';
+      }
+
+    }
+    if (selected) {
+      options.innerHTML += '  <option value="" > All</option>';
+    } else {
+      options.innerHTML += '  <option value="" selected> All</option>';
+    }
+
+  } else {
+    if (user.preferedLanuage) {
+      for (var i = 0; i < user.preferedLanuage.length; i++) {
+        if (selectedLanguage === user.preferedLanuage[i]) {
+          selected = true;
+          options.innerHTML += '<option value=' + user.preferedLanuage[i] + ' selected>' + user.preferedLanuage[i] + '</option>';
+        } else {
+          options.innerHTML += '<option value=' + user.preferedLanuage[i] + '>' + user.preferedLanuage[i] + '</option>';
+        }
+      }
+      if (selected) {
+        options.innerHTML += '  <option value="" > All</option>';
+      } else {
+        options.innerHTML += '  <option value="" selected> All</option>';
+      }
+    }
+  }
+
+  $('#language_qr').val(queryParam.language.charAt(0).toUpperCase() + queryParam.language.slice(1) + '');
+  // add title for page heading dynamically
+  $("#thisWeekTitle").text('New ' + queryParam.language.charAt(0).toUpperCase() + queryParam.language.slice(1) + ' Movies Released This Week');
+  $("#pastWeekTitle").text('New ' + queryParam.language.charAt(0).toUpperCase() + queryParam.language.slice(1) + ' Movies Released Past Week');
+  $("#previewsWeekTitle").text('New ' + queryParam.language.charAt(0).toUpperCase() + queryParam.language.slice(1) + ' Movies Released Recently');
+  $(".limit").each(function(i) {
+    len = $(this).text().length;
+    if (len > 60) {
+      $(this).text($(this).text().substr(0, 60) + '...');
+    }
+  });
+  $('#language_qr').on('change', function() {
+    if ((this.value === undefined || this.value === null || this.value.length === 0) || (typeof this.value === "" || typeof this.value == 'undefined')) {
+
+      // console.log("if");
+      // console.log(this.value);
+      // debugger;
+      window.location.href = "/movies";
+    } else {
+      // console.log("else");
+      // console.log(this.value);
+      // debugger;
+      window.location.href = "/movies/" + this.value.toLowerCase();
+    }
+
+  });
+  $("#modal-registration").on("hidden.bs.modal", function() {
+    $("#videoPlayer_iframe").attr("src", "");
+  });
+  // whoToFollow();
+  trandingMovies();
+  trendingList();
+  popularFeeds();
+  trandingCelebrities();
+  $.ajax({
+    type: "GET",
+    url: "/trailerRecommened",
+    success: function(data) {
+      let html = '';
+      for (let i = 0; i < data.result.length; i++) {
+        html += `
+        <div class="col-lg-1_5 col-md-2 col-4 smp">
+        <a target="_blank" href="/videos/trailer/all/${data.result[i].title.trim().replace(/[.']/g, '').replace(/[^a-zA-Z0-9]/g,'-').toLowerCase()}/${data.result[i]._id}">
+          <div class="card-img-actions" style=" width: inherit;">
+            <img src="${data.result[i].poster}" onerror="this.src='/images/No_Image_Available.jpg'"alt="${data.result[i].title}"class="smi">
+          </div>
+        </a>
+        <p class="smt"><a  target="_blank"  href="/videos/trailer/all/${data.result[i].title.trim().replace(/[.']/g, '').replace(/[^a-zA-Z0-9]/g,'-').toLowerCase()}/${data.result[i]._id}">${data.result[i].title}</a></p>
+        </div>
+        `;
+      }
+      $("#coming_soon").append(html);
+    }
+  });
+  // $("#last-week").on("show.bs.collapse", function() {
+  //   console.log('last-week expand');
+  //   getLastWeekMovies();
+  // });
+  $("#previous").on("show.bs.collapse", function() {
+
+    getPreviousWeekMovies();
+  });
+
+});
+
+
+// $('#last-week').on('expand', function() {
+//   // $(this).scrollview("scrollTo", (this).position(), 100);
+//   console.log('last-week expand');
+// });
+
+function playVideo(url) {
+  $("#videoPlayer_iframe").attr("src", url.id + `?autoplay=1`);
+  $("#videoPlayer").click();
+}
+
+function getLastWeekMovies() {
+  let preUrl = '/lastweek?language=' + $('#language_qr').val();
+  $.ajax({
+    type: "GET",
+    url: preUrl,
+    data: {},
+    success: function(data) {
+
+    }
+  });
+}
+
+// my voting function
+   $(document).on('click', '.listmyVoting', function(event) {
+     let currentElem = $(event.currentTarget);
+     votingList({
+       movieId: currentElem[0].id,
+       voting: currentElem.hasClass('upvote') ? 'upVoted' : 'downVoted',
+       genre: ""
+      });
+     });
+// voting function ends
+
+// Date Function
+function getformatDate(unix_timestamp) {
+  if (unix_timestamp == '' || unix_timestamp == undefined) {
+    return '-';
+  }
+  var a = new Date(unix_timestamp * 1000);
+  var months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  //var months = ['01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12'];
+  var year = a.getFullYear();
+  var month = months[a.getMonth()];
+  var date = a.getDate();
+  var time = date + ' ' + month + ' ' + year;
+  return time;
+}
+// Date func ends
+
+function getPreviousWeekMovies() {
+  $(".movieViewsIcon").removeClass("fa fa-chevron-down");
+  $(".movieViewsIcon").addClass("fa fa-chevron-up");
+  let preUrl = '/previousweek?language=' + $('#language_qr').val();
+  $.ajax({
+    type: "GET",
+    url: preUrl,
+    data: {},
+    success: function(data) {
+      let movieData = data.movies;
+      let movieDisplay = '';
+       for (var i = 0; i < movieData.length; i++) {
+        // console.log(movieData[i].releasedDate);
+
+        movieDisplay +=`
+              <div class="row border-bottom mt-lg-1"  id="previousWeekShowMore_${movieData[i]._id}">
+              <div class="col-md-1 col-2 col-lg-1 text-center" style="padding-right: 0px;padding-left:0px">
+              <div class="row">
+              <div class="col-md-12 col-12"><span style="cursor:pointer" class="listmyVoting upvote" id="${movieData[i]._id}"> <i class="icon-arrow-up5 icon-3x"></i> </span></div>
+              </div>
+              <span class="likes-count" id="${movieData[i]._id}_voting" style="font-size: 1.41538462rem;">${movieData[i].voting}</span>
+              <div class="row">
+              <div class="col-md-12 col-12"> <span style="cursor:pointer" class="listmyVoting downvote" id="${movieData[i]._id}"><i class="icon-arrow-down5 icon-3x"></i></span> </div>
+              </div>
+              <p> Votes</p>
+              </div>
+
+              <div class="col-lg-1_5 col-md-2  col-sm-2 col-3 img_poster_div_${movieData[i]._id}" style="text-align: center"><img alt="${movieData[i].title}" class="img img-poster imageClass img_poster_${movieData[i]._id}" src="${movieData[i].poster}" onerror="imageCanvas('${movieData[i].title}','${movieData[i]._id}');" style=" width: inherit; "
+              /></div>
+
+              <div class="col-lg-7  col-md-6  col-sm-8 col-7  ml-lg-1  mb-lg-1 cardDiv" style="cursor: pointer;" id="${movieData[i]._id}-${movieData[i].title}">
+              <a href="/movie/title/${movieData[i]._id}/${movieData[i].title}" target="_blank">
+              <h3 class="card-title text-limit mb-0  text-left">
+               ${movieData[i].title}
+              </h3>
+              <p class="text-limit capitalize" title="${movieData[i].genre}" class="text-left"><strong>Genre: </strong>
+               ${movieData[i].genre}
+              </p>`;
+              if(movieData[i].directorsId.length>0){
+                movieDisplay +=`<p class="text-limit" class=" text-left"><strong>Director: </strong>`;
+                movieData[i].directorsId.map((data,index)=>{
+                  if(index===movieData[i].directorsId.length-1){
+                    movieDisplay +=`<a href="/person/profile/${data.searchableTitle}" title="${data.title}">${data.title}</a>`;
+                  }else{
+                    movieDisplay +=`<a href="/person/profile/${data.searchableTitle}" title="${data.title}">${data.title}</a> , `;
+                  }
+
+                })
+                movieDisplay +=`</p>`;
+              }else{
+                movieDisplay +=`<p class="text-limit" title="${movieData[i].director}" class=" text-left"><strong>Director: </strong>
+                 ${movieData[i].director}
+                </p>`;
+              }
+              if(movieData[i].starsId.length>0){
+                movieDisplay +=`<p class="text-limit" class=" text-left"><strong>Starring: </strong>`;
+                movieData[i].starsId.map((data,index)=>{
+                  if(index===movieData[i].starsId.length-1){
+                    movieDisplay +=`<a href="/person/profile/${data.searchableTitle}" title="${data.title}">${data.title}</a>`;
+                  }else{
+                    movieDisplay +=`<a href="/person/profile/${data.searchableTitle}" title="${data.title}">${data.title}</a> , `;
+                  }
+
+                })
+                movieDisplay +=`</p>`;
+              }else{
+                movieDisplay +=`<p class="text-limit" title="${movieData[i].stars[0]}" class=" text-left"><strong>Starring: </strong>
+                         ${movieData[i].stars[0]}
+                        </p>`;
+              }
+      movieDisplay +=`
+              <p class="text-limit" title="${movieData[i].language}" class="text-left">
+                ${movieData[i].runTime} Mins |
+                ${movieData[i].language} |
+                ${getformatDate(`${movieData[i].releasedDate}`)}
+              </p>
+              </a>
+             <div class=" text-left text-limit" id="userVoted_Div_${movieData[i]._id}">
+             <span id="${movieData[i]._id}" onclick="getVoterData()" style="cursor:pointer;color:#2196f3">
+              ${movieData[i].pageViews} views | Voted by
+              ${movieData[i].totalVoted} People
+             </span>
+             </div>
+             </div>
+
+             <div class="col-lg-2 col-md-2 col-12 watch-trailer-btn mb-1 mt-sm-2 " style="align-self: center">
+             <button style="min-width:100%" class="btn btn-primary" onclick="playVideo(this);" id="${movieData[i].trailerUrl}">Watch Trailer</button>
+             </div>
+             </div>
+         `;
+       }
+       $("#movieViews").append(movieDisplay);
+
+    }
+  });
+}
+
+function updateVote() {
+  var selected = $('.vote_Checkbox:checked').map(function() {
+    return this.value;
+  }).get();
+  // console.log(selected);
+  if (selected.length > 0) {
+    upVotingGenre(selected, 0);
+  } else {
+    $('#review-modal').modal('toggle');
+  }
+
+}
+
+function upVotingGenre(selected, index) {
+  let objVal = selected[index].split("_");
+  if (user.status) {
+    $.ajax({
+      type: "POST",
+      url: "/votingMovie",
+      data: {
+        movieId: objVal[0],
+        voting: "upVoted",
+        genre: objVal[1]
+      },
+      success: function(data) {
+        index++;
+        if (selected.length <= index) {
+          window.location.reload();
+        } else {
+          upVotingGenre(selected, index)
+        }
+      }
+    });
+  } else {
+    // user must login first before voting
+    sessionStorage.setItem('preLocation', window.location.href);
+    window.location.href = "/login";
+  }
+}
+// $(".cardDiv .genres-block").on("click", (event) => {
+//   // var checked = "";
+//   // $(".modal-body").html("");
+//   var details = JSON.parse(event.delegateTarget.id);
+//   // for (var list = 0; list < details.voted.length; list++) {
+//   checked += '<div class="form-check form-check-inline"> <label class="form-check-label"> <input type="checkbox" name="vote"  class="form-check-input-styled vote_Checkbox"  data-fouc value=' + details._id + '_' + details.voted[list].genre +
+//     '>' + details.voted[list].genre.charAt(0).toUpperCase() + details.voted[list]
+//     .genre.slice(1) + ' </label> </div>';
+// }
+// $(".modal-body").append(checked);
+// $('.form-check-input-styled').uniform();
+// $('.form-check-input-styled-primary').uniform({
+//   wrapperClass: 'border-primary-600 text-primary-800'
+// });
+// $('#review-modal').modal({
+//   show: true,
+//   backdrop: 'static',
+//   keyboard: false
+// });
+//   window.location.href = "/movie/title/" + details._id + "/" + urlStdFormat(details.title);
+// })
+// $(".cardDiv .clickable ").on("click", (event) => {
+//   //window.location.href = "/movie/title" + event.delegateTarget.id.trim().replace(/[.']/g, '').replace(/[^a-zA-Z0-9]/g, '-').toLowerCase();
+//   console.log(event.delegateTarget.id);
+//   let tempUrl = event.delegateTarget.id.split('-');
+//   console.log("/movie/title/" + tempUrl[0] + "/" + urlStdFormat(tempUrl[1]));
+// });
+
+$(document).mouseup(function(e) {
+  var container = $("#searchDiv");
+
+  // if the target of the click isn't the container nor a descendant of the container
+  if (!container.is(e.target) && container.has(e.target).length === 0) {
+    $('#searchResult').remove();
+    // $('#search-bg-modal').removeClass('search-bg-modal');
+  }
+});
+
+// Search Events.
+
+// Show search.
+$('#search-bar').on('click', () => {
+  $('#search-bg-modal').show();
+})
+// Hide Search.
+$('#search-bg-modal .search-modal-content .close-icon').on('click', () => {
+  $('#searchInput').val('');
+  $('#search-bg-modal').hide();
+})
+
+// End of Search Events.
+
+function searchMovie() {
+  let searchVal = $('#searchInput').val();
+  if (typeof searchVal === 'undefined' || searchVal.length === 0) {
+    $('#searchResult').remove();
+  } else {
+    $.ajax({
+      type: "GET",
+      url: "/searchList",
+      data: {
+        searchKey: searchVal
+      },
+      success: function(data) {
+          if (data.code == 1) {
+          if (typeof data.result === 'undefined' || data.result.length == 0) {
+            $('#searchResult').remove();
+          } else {
+            let resultDiv =
+              `<div id="searchResult">`;
+
+            for (var i = 0; i < data.favouriteListResult.length; i++) {
+              resultDiv +=
+                `
+              <a href="/list/${data.favouriteListResult[i].userTag}/${data.favouriteListResult[i].category}/${urlStdFormat(data.favouriteListResult[i].title)}" target="_blank" >
+                <div class="row ml-1 mr-1" >
+                  <div class="col-md-1 col-2 col-lg-1">
+                    <img alt="${data.favouriteListResult[i].title}" src="${data.favouriteListResult[i].poster}" style="width:inherit;max-height: 70px;" />
+                  </div>
+                  <div class="col-md-11 col-10 col-lg-11" style="text-align:left">
+                    <h5 class="text-limit" style="margin-bottom:0px;color:black">${data.favouriteListResult[i].title}</h5>
+                  </div>
+                </div>
+                <hr style="margin-top: 5px;margin-bottom: 5px;">
+              </a>
+              `;
+            }
+
+            for (var i = 0; i < data.result.length; i++) {
+              let releaseDateObj = new Date(data.result[i].releasedDate * 1000);
+              let year = releaseDateObj.getFullYear();
+              resultDiv +=
+                `
+              <a href="/movie/title/${data.result[i]._id}/${urlStdFormat(data.result[i].title)}" target="_blank" >
+                <div class="row ml-1 mr-1" >
+                  <div class="col-md-1 col-2 col-lg-1">
+                    <img alt="${data.result[i].title}" src="${data.result[i].poster}" style="width:inherit;max-height: 70px;" />
+                  </div>
+                  <div class="col-md-11 col-10 col-lg-11" style="text-align:left">
+                    <h5 class="text-limit" style="margin-bottom:0px;color:black">${data.result[i].title} (${year})</h5>
+                    <p class="text-limit" style="color:gray"> <strong>Stars: </strong>${data.result[i].stars}</p>
+                    <p class="text-limit" style="color:gray"> <strong>Language: </strong>${data.result[i].language}</p>
+                  </div>
+                </div>
+                <hr style="margin-top: 5px;margin-bottom: 5px;">
+              </a>
+              `;
+            }
+
+            resultDiv += '</div>';
+            $('#searchResult').remove();
+            // $('#search-bg-modal').addClass('search-bg-modal');
+            $('#searchDiv').append(resultDiv);
+          }
+
+        } else if (data.code == 6) {}
+      }
+    });
+  }
+
+}
+String.prototype.urlStdFormat = function() {
+  return this.toLowerCase();
+};
+
+function votingList(votingData) {
+  // if (user.status) {
+  if (true) {
+    $.ajax({
+      type: "POST",
+      url: "/votingMovie",
+      data: votingData,
+      success: function(data) {
+        if (data.code == 1) {
+          $('#' + votingData.movieId + '_voting').text(`${data.voting}`);
+          $('span[id="' + votingData.movieId + '"]').removeClass('active');
+          $('span[id="' + votingData.movieId + '"]').each(function(event) {
+            if (votingData.voting === 'upVoted' && $(this).hasClass('upvote')) {
+              $(this).addClass('active');
+            } else if (votingData.voting === 'downVoted' && $(this).hasClass('downvote')) {
+              $(this).addClass('active');
+            }
+          });
+        }
+      },
+      error: function(xhr, status, msg) {
+
+      }
+    });
+  } else {
+    // user must login first before voting
+    sessionStorage.setItem('preLocation', window.location.href);
+    window.location.href = "/login";
+  }
+}
+
+// See voting older movies
+function getVoterData(){
+  let currentElem = $(event.currentTarget);
+  let itemId = currentElem[0].id;
+  var postURL = location.protocol + '//' + location.host + '/movie/votedUsers';
+  $.ajax({
+    type: "POST",
+    url: postURL,
+    data: {
+      //category: 'movies',
+      itemId: itemId
+    },
+    success: function(data) {
+      if (data.code == 1) {
+        activeVotedUserListDiv = itemId;
+        $('#userVotedList').remove();
+        if (typeof data.userList !== 'undefined' && data.userList.length > 0) {
+          let resultObj = `<div  id="userVotedList" class="col-md-9 col-12 col-lg-8">`;
+          // let upObject = data.userList[0].upVoted;
+          let upObject = [...data.userList[0].upVoted, ...data.userList[0].downVoted];
+          for (var variable in upObject) {
+            if (upObject.hasOwnProperty(variable)) {
+              resultObj += `<a href="/profile/${upObject[variable].userTag}"><div class="row">
+                   <div class="col-md-2 col-4">`;
+              if (!isEmpty(upObject[variable].profileImage) && !isEmpty(upObject[variable].name)) {
+                resultObj += `<img src="${upObject[variable].profileImage}" class="rounded-circle mt-2 mb-2" style="width:inherit;margin-top:3%;margin-bottom:3%">`;
+                resultObj += `</div>`
+                resultObj += `<div class="col-md-10 col-4 pt-2" style="white-space: pre;">`;
+                resultObj += `<p style="color:#2196f3"><strong>${upObject[variable].name}</strong></p>`;
+                resultObj += `<p style="color:gray">@${upObject[variable].userTag}</p>`;
+              }
+              resultObj += `</div>`
+              resultObj += `</div></a>`;
+            }
+          }
+          // add anonymous users here
+          for (let i = 0; i < data.userList[0].totalVoted - upObject.length; i++) {
+            resultObj += `<div class="row">
+                          <div class="col-md-2 col-4">`;
+            resultObj += `<img src="/images/anonymous.png" class="rounded-circle mt-2 mb-2" style="width:inherit;margin-top:3%;margin-bottom:3%">`;
+            resultObj += `</div>`
+            resultObj += `<div class="col-md-10 col-4 pt-2" style="white-space: pre;">`;
+            resultObj += `<p style="color:#2196f3"><strong>Anonymous</strong></p>`;
+            resultObj += `<p style="color:gray">Unknown user</p>`;
+            resultObj += `</div>`
+            resultObj += `</div>`;
+          }
+          resultObj += `</div>`;
+          $('#userVoted_Div_' + itemId).append(resultObj);
+         }
+      } else if (data.code == 6) {
+        $('#userVotedList').remove();
+      }
+    }
+  });
+}
+// Voting view ends
+
+$('.getVotedUser').on('click', (event) => {
+  let currentElem = $(event.currentTarget);
+  let itemId = currentElem[0].id;
+  var postURL = location.protocol + '//' + location.host + '/movie/votedUsers';
+  $.ajax({
+    type: "POST",
+    url: postURL,
+    data: {
+      //category: 'movies',
+      itemId: itemId
+    },
+    success: function(data) {
+      if (data.code == 1) {
+        activeVotedUserListDiv = itemId;
+        $('#userVotedList').remove();
+        if (typeof data.userList !== 'undefined' && data.userList.length > 0) {
+          let resultObj = `<div  id="userVotedList" class="col-md-9 col-12 col-lg-8">`;
+          // let upObject = data.userList[0].upVoted;
+          let upObject = [...data.userList[0].upVoted, ...data.userList[0].downVoted];
+          for (var variable in upObject) {
+            if (upObject.hasOwnProperty(variable)) {
+              resultObj += `<a href="/profile/${upObject[variable].userTag}"><div class="row">
+                   <div class="col-md-2 col-4">`;
+              if (!isEmpty(upObject[variable].profileImage) && !isEmpty(upObject[variable].name)) {
+                resultObj += `<img src="${upObject[variable].profileImage}" class="rounded-circle mt-2 mb-2" style="width:inherit;margin-top:3%;margin-bottom:3%">`;
+                resultObj += `</div>`
+                resultObj += `<div class="col-md-10 col-4 pt-2" style="white-space: pre;">`;
+                resultObj += `<p style="color:#2196f3"><strong>${upObject[variable].name}</strong></p>`;
+                resultObj += `<p style="color:gray">@${upObject[variable].userTag}</p>`;
+              }
+              resultObj += `</div>`
+              resultObj += `</div></a>`;
+            }
+          }
+          // add anonymous users here
+          for (let i = 0; i < data.userList[0].totalVoted - upObject.length; i++) {
+            resultObj += `<div class="row">
+                          <div class="col-md-2 col-4">`;
+            resultObj += `<img src="/images/anonymous.png" class="rounded-circle mt-2 mb-2" style="width:inherit;margin-top:3%;margin-bottom:3%">`;
+            resultObj += `</div>`
+            resultObj += `<div class="col-md-10 col-4 pt-2" style="white-space: pre;">`;
+            resultObj += `<p style="color:#2196f3"><strong>Anonymous</strong></p>`;
+            resultObj += `<p style="color:gray">Unknown user</p>`;
+            resultObj += `</div>`
+            resultObj += `</div>`;
+          }
+          resultObj += `</div>`;
+          $('#userVoted_Div_' + itemId).append(resultObj);
+         }
+      } else if (data.code == 6) {
+        $('#userVotedList').remove();
+      }
+    }
+  });
+});
+
+$(document).mouseup(function(e) {
+  var container = $("#userVoted_Div_" + activeVotedUserListDiv);
+  // if the target of the click isn't the container nor a descendant of the container
+  if (!container.is(e.target) && container.has(e.target).length === 0) {
+    $('#userVotedList').remove();
+  }
+});
+
+function isEmpty(data) {
+  var flag = false;
+  if ((data === undefined || data === null || data.length === 0) || (typeof data === "" || typeof data == 'undefined')) {
+    flag = true;
+  }
+  return flag;
+}

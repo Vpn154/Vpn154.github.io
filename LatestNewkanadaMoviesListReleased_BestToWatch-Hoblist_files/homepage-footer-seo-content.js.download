@@ -1,0 +1,40 @@
+// this is added to keep all footer content based on language for the seo optimization
+function getCustomFooter(language) {
+  let footerContent = "";
+  switch (language) {
+    case "english":
+      footerContent = ""
+
+      break;
+    case "kannada":
+      footerContent = `
+      <p><strong>Kannada</strong> is one of the oldest languages of India, the Kannada language has a history of 2500 years. Kannada is a Dravidian language spoken by people of Karnataka and Kannada speaking people are popularly known as Kannadigas. There are more than 5.6 Crore native Kannada speaking people in Karnataka.</p>
+<p>Kannada film industry is popularly known as Chandanavana or Sandalwood. Sandalwood releases more than 190 new Kannada movies every year. There are 1250+ film screens in Karnataka for Kannada movies and the Kannada movie fans are present all across the world, some of the popular Kannada movies fans abroad live in US, UK & Australia.</p>
+<p>The first Kannada movie released dates back to 1934 was Sati Sulochana, it was soon followed by Bhakta Dhruva. Dr.Rajkumar is one of the most popular Kannada actors who acted in more than 250 Kannda movies in lead roles. Rajkumar's wife Mrs.Parvathamma Rajkumarsoon started a film production and distribution company, Vajreshwari Combines.</p>
+<p>Along with Dr.Rajkumar, Mr.Ambareesh and Dr.Vishnuvardhan are considered to pillars of the Kannada film industry. The trio combined acted in more than 700+ movies.
+Some of the popular Kannada actresses of all time are Kalpana, Aarathi, Lakshmi, Padma Vaasanthi, Geetha, Madhavi, Saritha, Manjula and Jayamala.</p>
+
+In the 1980s, the industry was dominated by actors like Shankar Nag, V. Ravichandran, Shivarajkumar, Ananth Nag and Ramesh Aravind and actresses like Sudha Rani, Tara, Malashri, Anjali Sudhakar, Vanitha Vasu, Anjana, and Shruthi.
+
+The popular of Kannada films and actors have grown nationally and the popular Kannada actors in recent years are Puneeth Rajkumar, Darshan, Sudeep, Shiva Rajkumar, Yash, Ganesh, Duniya Vijay, Upendra, Vijay Raghavendra, Srimurali, Prajwal Devraj, Diganth, Rakshit Shetty, Prem, Sharan, Chiranjeevi Sarja & Dhruva Sarja.
+
+Heroines like Radhika Pandit, Rachita Ram, Shruthi Hariharan, Deepa Sannidhi, Neethu, Ramya, Amulya, Pooja Gandhi, Aindritha Ray, Ragini Dwivedi, Shanvi Srivatsava, Meghana Raj, Manvitha Harish, Radhika Chetan, Pranitha Subhash, Haripriya, Avantika Shetty, Shraddha Srinath, Samyuktha Hegde, Parul Yadav and Sanjana have presented hit films in Kannada Film Industry.
+<p>Some of the popular Kannada films which are all-time best include,</p>
+<ol><li><strong>Bedara Kannappa</strong> - A1954 Kannada film acted by Dr Rajkumar & Pandari Bai and directed by H.L.N Simha. Bedara Kannappa was as a popular play produced by the Gubbi Veeranna Nataka Company before it became a hit Kannada film. Narasimharaju debuted in this movie, who later went on to be named among Kannada cinema's finest comedian actors.</li>
+<li>School Master - A 1958 Kannada film which got Dubbed into Tamil and later remade into Hindi, Malayalam and Telugu.</li>
+<li><strong>Sharapanjara</strong> (1971) - Is one of the finest Kannada movies of the time made by Puttanna Kangal and it is based on a novel Sharapanjara by Mrs.Triveni.</li>
+<li><strong>Vamshavruksha</strong> (1971) - Is a movie by BV Karanth & Girish Karnad and it is based on a novel by S L Bhyrappa. Vamshavruksha won National Award for Best Direction.</li>
+<li><strong>Bhootayyana Maga Ayyu</strong>(1974) - A landmark film in Kannada industry was appreciated by well-known faces in Indian cinema like Mr Kamal Hasan.</li>
+<li><strong>Apthamitra</strong> (2004) - A horror and psychological thriller movie was a tremendous hit. Directed by P Vasu and acted by Vishnuvardhan, Ramesh & Soundharya in key roles.</li>
+<li><strong>Mungaru Male</strong> (2006) - A romantic musical love story directed by Yograj Bhat and stars Ganesh, Pooja Gandhi & Ananth Nag in key roles. Mungaru Male goes on to become one of the biggest hit films of the Kannada film industry.</li>
+<li><strong>K.G.F: Chapter 1</strong> (2018) - A period action movie by Prasanth Neel becomes one of the highest-grossing Kannada movies of all time.</li>
+<li><strong>Kurukshetra</strong> (2019 film) - A historic film which is based on the Mahabharat wins the heart of Kannadigas.</li>
+</ol>
+      `
+      break;
+    default:
+      ""
+
+  }
+  return footerContent;
+}
